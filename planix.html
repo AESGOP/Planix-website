@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Transiciones suaves de vistas */
+        .view-section {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Checkbox animado personalizado */
+        .checkbox-custom:checked + div {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .checkbox-custom:checked + div svg {
+            display: block;
+        }
+
+        /* Efecto de destello de pantalla para alarmas */
+        @keyframes pulse-red {
+            0%, 100 flex { background-color: rgba(239, 68, 68, 0.25); }
+            50% { background-color: rgba(239, 68, 68, 0.65); }
+        }
+        .alarm-flash {
+            animation: pulse-red 1.2s infinite;
+        }
+        
+        /* Efecto hover interactivo sobre las celdas vacías del horario */
+        .schedule-slot-empty:hover {
+            background-color: rgba(59, 130, 246, 0.08);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .dark .schedule-slot-empty:hover {
+            background-color: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        /* Estilos para el fondo dinámico personalizado */
+        :root {
+            --custom-bg: #f9fafb;
+        }
+        .dark {
+            --custom-bg: #0f172a;
+        }
+        body {
+            background-color: var(--custom-bg) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-dark-900 dark:text-gray-200 h-screen flex flex-col md:flex-row overflow-hidden transition-colors duration-300">
+
+    <!-- Menú Lateral (Desktop) / Barra inferior (Mobile) -->
+    <aside class="w-full md:w-64 bg-white/95 dark:bg-dark-800/95 backdrop-blur-md border-b md:border-b-0 md:border-r border-gray-200/50 dark:border-gray-700/50 flex flex-row md:flex-col justify-between shrink-0 z-20 transition-all">
+        <div class="flex flex-row md:flex-col w-full md:w-auto">
+            <div class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700 hidden md:flex">
+                <i class="fa-solid fa-graduation-cap text-2xl text-blue-600 dark:text-blue-400"></i>
+                <span class="ml-3 font-bold text-xl tracking-tight text-gray-900 dark:text-white">Pla<span class="text-blue-600 dark:text-blue-400">nix</span></span>
+            </div>
+            
+            <nav class="flex flex-row md:flex-col gap-1 p-2 md:p-4 w-full overflow-x-auto md:overflow-x-visible">
+                <button onclick="nav('dashboard')" id="nav-dashboard" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 font-medium shrink-0">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                    <span class="text-sm md:text-base">Inicio</span>
+                </button>
+                <button onclick="nav('schedule')" id="nav-schedule" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-gray-500 hover:text-gray-950 dark:hover:text-white shrink-0">
+                    <i class="fa-solid fa-calendar-week text-lg"></i>
+                    <span class="text-sm md:text-base">Horario</span>
+                </button>
+                <button onclick="nav('tasks')" id="nav-tasks" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-gray-500 hover:text-gray-950 dark:hover:text-white shrink-0">
+                    <i class="fa-solid fa-list-check text-lg"></i>
+                    <span class="text-sm md:text-base">Tareas</span>
+                </button>
+                <button onclick="nav('timer')" id="nav-timer" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-gray-500 hover:text-gray-950 dark:hover:text-white shrink-0">
+                    <i class="fa-solid fa-stopwatch text-lg"></i>
+                    <span class="text-sm md:text-base">Reloj</span>
+                </button>
+                <button onclick="nav('alarms')" id="nav-alarms" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-gray-500 hover:text-gray-950 dark:hover:text-white shrink-0">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="text-sm md:text-base">Alarmas</span>
+                </button>
+                <button onclick="nav('notes')" id="nav-notes" class="nav-btn flex items-center gap-3 p-3 rounded-xl transition text-gray-500 hover:text-gray-950 dark:hover:text-white shrink-0">
+                    <i class="fa-regular fa-note-sticky text-lg"></i>
+                    <span class="text-sm md:text-base">Notas</span>
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Opciones del Panel Lateral -->
+        <div class="p-4 border-t border-gray-200/85 dark:border-gray-700/85 hidden md:flex flex-col gap-2 bg-white/50 dark:bg-dark-800/50">
+            <!-- Selector de Color de Fondo -->
+            <div class="flex items-center justify-between p-2 rounded-xl bg-gray-50/50 dark:bg-dark-900/30 border border-gray-100/50 dark:border-gray-700/30">
+                <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                    <i class="fa-solid fa-palette text-sm"></i>
+                    <span class="text-xs font-semibold">Fondo</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <input type="color" id="app-bg-picker" onchange="cambiarFondoApp(this.value)" class="w-7 h-7 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer p-0.5 bg-transparent" title="Personalizar Fondo">
+                    <button onclick="resetearFondoApp()" class="text-gray-400 hover:text-red-500 text-xs p-1" title="Fondo por defecto">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="toggleDarkMode()" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-500 dark:text-gray-400">
+                <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                <span id="theme-text" class="text-sm font-medium">Modo Oscuro</span>
+            </button>
+            <button onclick="confirmarReseteoCompleto()" class="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition text-red-500">
+                <i class="fa-solid fa-trash-can text-lg"></i>
+                <span class="text-sm font-medium">Limpiar Datos</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <!-- Header Superior -->
+        <header class="h-16 bg-white/90 dark:bg-dark-800/90 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between px-6 z-10 shrink-0">
+            <h1 id="page-title" class="text-xl font-bold text-gray-800 dark:text-white">Inicio</h1>
+            
+            <div class="flex items-center gap-3">
+                <!-- Selector de Fondo en Móviles -->
+                <div class="flex items-center gap-1.5 bg-gray-100/80 dark:bg-gray-700/80 p-1.5 rounded-xl md:hidden">
+                    <i class="fa-solid fa-palette text-gray-500 dark:text-gray-300 text-sm"></i>
+                    <input type="color" id="app-bg-picker-mobile" onchange="cambiarFondoApp(this.value)" class="w-6 h-6 rounded-md border-0 cursor-pointer bg-transparent p-0">
+                    <button onclick="resetearFondoApp()" class="text-gray-400 hover:text-red-500 text-xs ml-0.5" title="Restablecer fondo">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+
+                <button onclick="toggleDarkMode()" class="md:hidden p-2 text-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 text-lg">
+                    <i class="fa-solid fa-moon dark:hidden"></i>
+                    <i class="fa-solid fa-sun hidden dark:block text-yellow-400"></i>
+                </button>
+                <button onclick="abrirAlertaRapida()" class="relative p-2 text-gray-500 hover:text-blue-600 transition-colors">
+                    <i class="fa-solid fa-bell text-xl"></i>
+                    <span id="notification-badge" class="absolute top-1 right-1 h-3 w-3 rounded-full bg-red-500 hidden"></span>
+                </button>
+                <!-- Avatar de Perfil Interactivo -->
+                <div onclick="abrirModalPerfil()" class="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow cursor-pointer overflow-hidden transition-transform hover:scale-105 active:scale-95 border-2 border-white dark:border-dark-800" id="header-avatar-container" title="Editar Perfil">
+                    <i class="fa-solid fa-user text-sm"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenedor de las Secciones -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+
+            <!-- VISTA: INICIO -->
+            <section id="view-dashboard" class="view-section block max-w-5xl mx-auto space-y-6">
+                <!-- Banner de Solicitud de Notificaciones -->
+                <div id="noti-permission-banner" class="hidden bg-blue-50/90 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 backdrop-blur-md">
+                    <div class="flex gap-3 items-center">
+                        <i class="fa-solid fa-circle-info text-blue-500 text-xl"></i>
+                        <p class="text-sm text-blue-700 dark:text-blue-300 font-medium">¡Mantente al día! Permite que Planix envíe alertas y recordatorios de tus exámenes a tu dispositivo.</p>
+                    </div>
+                    <button onclick="requestNotificationPermission()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition shrink-0">Permitir Notificaciones</button>
+                </div>
+
+                <!-- Tarjetas de Estadísticas Rápidas -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm flex items-center gap-4 backdrop-blur-md">
+                        <div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 text-xl">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Tareas Completas</p>
+                            <h3 class="text-2xl font-bold" id="stat-tasks-done">0</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm flex items-center gap-4 backdrop-blur-md">
+                        <div class="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 text-xl">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Tiempo de Estudio</p>
+                            <h3 class="text-2xl font-bold" id="stat-study-time">0m</h3>
+                        </div>
+                    </div>
+                    <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm flex items-center gap-4 backdrop-blur-md">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Alarmas Activas</p>
+                            <h3 class="text-2xl font-bold" id="stat-alarms-active">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Recordatorios Urgentes -->
+                <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm backdrop-blur-md">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-circle-exclamation text-red-500"></i> Recordatorios de Tareas y Exámenes</h2>
+                    <div id="dash-urgent-tasks" class="space-y-3">
+                        <p class="text-sm text-gray-400 py-4 text-center">No hay pendientes programados.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: HORARIO -->
+            <section id="view-schedule" class="view-section hidden max-w-6xl mx-auto space-y-6">
+                <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm backdrop-blur-md">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-table text-indigo-500"></i> Horario Semanal Escolar</h2>
+                            <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-hand-pointer text-blue-500"></i> Tip táctil: Presiona cualquier materia para editarla o una celda vacía para agendar al instante.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="abrirModalPersonalizarHoras()" class="text-xs bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-xl hover:bg-gray-200 font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-clock"></i> Horas
+                            </button>
+                            <button onclick="abrirModalClase()" class="text-xs bg-indigo-600 text-white px-3 py-2 rounded-xl hover:bg-indigo-700 font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Añadir Materia
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabla del Horario Táctil -->
+                    <div class="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+                        <table class="w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                                <tr class="text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-dark-700/50">
+                                    <th class="py-3 px-4 font-semibold w-24">Hora</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Lunes</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Martes</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Miércoles</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Jueves</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Viernes</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Sábado</th>
+                                    <th class="py-3 px-4 font-semibold text-center w-[13%]">Domingo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-grid" class="text-xs divide-y divide-gray-100/50 dark:divide-gray-800/50">
+                                <!-- JS generará las filas y los disparadores de celdas -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: TAREAS -->
+            <section id="view-tasks" class="view-section hidden max-w-4xl mx-auto space-y-6">
+                <!-- Formulario de Creación de Pendientes -->
+                <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm backdrop-blur-md">
+                    <h2 class="text-lg font-bold mb-4">Añadir Actividad o Recordatorio</h2>
+                    <form id="form-task" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">¿Qué tienes que hacer?</label>
+                            <input type="text" id="task-title" required placeholder="Ej. Examen final de historia..." class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Tipo de Actividad</label>
+                            <select id="task-type" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                <option value="tarea">📝 Tarea Normal</option>
+                                <option value="examen">⚠️ Examen / Parcial</option>
+                                <option value="exposicion">🎤 Exposición Oral</option>
+                                <option value="grupal">👥 Trabajo Grupal</option>
+                                <option value="pendiente">📌 Pendiente General</option>
+                            </select>
+                        </div>
+
+                        <!-- Autocompletado del nombre del Curso -->
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Curso / Materia (Escribe libremente)</label>
+                            <input type="text" id="task-course" list="courses-datalist" placeholder="Escribe el nombre del curso..." required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                            <datalist id="courses-datalist"></datalist>
+                        </div>
+
+                        <div class="md:col-span-2 grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-500">Día</label>
+                                <select id="task-day" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-500">Mes</label>
+                                <select id="task-month" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-500">Año</label>
+                                <select id="task-year" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2028">2028</option>
+                                    <option value="2029">2029</option>
+                                    <option value="2030">2030</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Prioridad</label>
+                            <select id="task-priority" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                <option value="alta">🔴 Alta / Urgente</option>
+                                <option value="media">🟡 Media / Normal</option>
+                                <option value="baja">🟢 Baja / Secundaria</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Color de Alerta</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="task-color" value="#3b82f6" class="w-12 h-11 p-0.5 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer bg-transparent">
+                                <span class="text-xs text-gray-400">Tono visual para la tarjeta</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Emoji Identificador</label>
+                            <input type="text" id="task-emoji" placeholder="Ej. 📚, 🚀, ⚠️, 🎓" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block flex items-center gap-2 text-xs font-semibold mb-1 text-gray-500">
+                                <input type="checkbox" id="task-alarm-toggle" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"> Activar Recordatorio de Hora
+                            </label>
+                            <input type="time" id="task-alarm-time" value="08:00" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold mb-1 text-gray-500">Notas Adicionales / Instrucciones</label>
+                            <textarea id="task-description" placeholder="Ingresa indicaciones del examen o detalles del trabajo..." rows="2" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white resize-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl p-3 text-sm transition shadow-md">
+                            Guardar Pendiente
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de Pendientes -->
+                <div class="bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm backdrop-blur-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold">Mis Tareas y Pendientes</h2>
+                        <div class="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
+                            <button onclick="setTaskFilter('all')" id="filter-task-all" class="text-xs px-3 py-1.5 rounded-lg font-medium bg-white dark:bg-gray-600 shadow text-gray-800 dark:text-white">Todas</button>
+                            <button onclick="setTaskFilter('pending')" id="filter-task-pending" class="text-xs px-3 py-1.5 rounded-lg font-medium text-gray-500 hover:text-gray-800 dark:hover:text-white">Pendientes</button>
+                        </div>
+                    </div>
+
+                    <div id="tasks-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                        <!-- JS inyectará las tareas -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: TEMPORIZADOR -->
+            <section id="view-timer" class="view-section hidden max-w-4xl mx-auto space-y-6">
+                <div class="bg-white/90 dark:bg-dark-800/90 p-8 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm flex flex-col items-center backdrop-blur-md">
+                    <h2 class="text-2xl font-bold mb-1 text-gray-900 dark:text-white">Temporizador de Estudio</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-8 text-center max-w-md">Establece tus horas y minutos ideales de concentración absoluta.</p>
+
+                    <!-- Selector de Modos -->
+                    <div class="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-2xl mb-8 w-full max-w-xs">
+                        <button onclick="setTimerMode('study')" id="btn-quick-work" class="flex-1 py-2 rounded-xl text-xs font-semibold transition bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-bold">Estudio</button>
+                        <button onclick="setTimerMode('break')" id="btn-quick-break" class="flex-1 py-2 rounded-xl text-xs font-semibold transition text-gray-500 hover:text-gray-900 dark:hover:text-white font-bold">Descanso</button>
+                    </div>
+
+                    <!-- Esfera del Reloj -->
+                    <div class="relative w-64 h-64 flex flex-col items-center justify-center border-8 border-gray-100/50 dark:border-gray-700/50 rounded-full shadow-inner mb-8 bg-gray-50/50 dark:bg-gray-900/40">
+                        <span id="timer-mode-label" class="text-xs font-bold text-blue-500 tracking-wider uppercase mb-1">Concentración</span>
+                        <div class="text-5xl font-bold font-mono text-gray-800 dark:text-white tracking-tight" id="pomo-timer">25:00</div>
+                    </div>
+
+                    <!-- Botones de Control -->
+                    <div class="flex gap-4 mb-8">
+                        <button onclick="toggleTimer()" id="btn-timer-toggle" class="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition">
+                            <i class="fa-solid fa-play ml-1"></i>
+                        </button>
+                        <button onclick="resetTimer()" class="w-14 h-14 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full flex items-center justify-center text-lg shadow-md transition">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Panel de Configuración de Horas y Minutos -->
+                    <div class="w-full max-w-md border-t border-gray-100/50 dark:border-gray-700/50 pt-6">
+                        <h3 class="text-sm font-bold text-center mb-4">Ajustar Tiempos de Sesión</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Sesión de Estudio -->
+                            <div class="bg-gray-50/50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100/30 dark:border-gray-800/30">
+                                <h4 class="text-xs font-bold text-blue-500 mb-2 text-center">T. de Estudio</h4>
+                                <div class="grid grid-cols-2 gap-1 text-center">
+                                    <div>
+                                        <label class="text-[9px] text-gray-400 block">Horas</label>
+                                        <input type="number" id="pomo-study-hours" min="0" max="23" value="0" class="w-full text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1.5 font-semibold text-xs text-gray-950 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] text-gray-400 block">Minutos</label>
+                                        <input type="number" id="pomo-study-minutes" min="0" max="59" value="25" class="w-full text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1.5 font-semibold text-xs text-gray-950 dark:text-white">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Sesión de Descanso -->
+                            <div class="bg-gray-50/50 dark:bg-gray-900/60 p-4 rounded-2xl border border-gray-100/30 dark:border-gray-800/30">
+                                <h4 class="text-xs font-bold text-green-500 mb-2 text-center">T. de Descanso</h4>
+                                <div class="grid grid-cols-2 gap-1 text-center">
+                                    <div>
+                                        <label class="text-[9px] text-gray-400 block">Horas</label>
+                                        <input type="number" id="pomo-break-hours" min="0" max="23" value="0" class="w-full text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1.5 font-semibold text-xs text-gray-950 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="text-[9px] text-gray-400 block">Minutos</label>
+                                        <input type="number" id="pomo-break-minutes" min="0" max="59" value="5" class="w-full text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1.5 font-semibold text-xs text-gray-950 dark:text-white">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="guardarConfiguracionPomo()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-3 mt-4 text-xs transition shadow">
+                            Guardar Configuración de Tiempos
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: ALARMAS -->
+            <section id="view-alarms" class="view-section hidden max-w-4xl mx-auto space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Formulario de Alarma -->
+                    <div class="md:col-span-1 bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm flex flex-col justify-between backdrop-blur-md">
+                        <div>
+                            <h2 class="text-lg font-bold mb-4">Nueva Alarma</h2>
+                            <form id="form-alarm" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 mb-1">Hora</label>
+                                    <input type="time" id="alarm-time" required value="07:00" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 mb-1">Etiqueta de Alerta</label>
+                                    <input type="text" id="alarm-label" placeholder="Ej. Despertador, clase, etc." class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 mb-1">Seleccionar Tono</label>
+                                    <select id="alarm-sound-select" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                                        <option value="beep">Clásico (Beep Beep)</option>
+                                        <option value="digital">Alerta Digital Retro</option>
+                                        <option value="melodic">Campana Melódica</option>
+                                        <option value="siren">Sirena de Alerta</option>
+                                    </select>
+                                </div>
+
+                                <!-- Subida de Audio Personalizado -->
+                                <div class="border-t border-gray-100/30 dark:border-gray-700/30 pt-4">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">¿Subir tu propio Sonido?</label>
+                                    <input type="file" id="alarm-custom-audio" accept="audio/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+
+                                <!-- Días de repetición -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-400 mb-2">Repetir Días</label>
+                                    <div class="flex flex-wrap gap-1">
+                                        <button type="button" onclick="toggleDaySel(this, 'L')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">L</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'M')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">M</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'X')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">M</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'J')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">J</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'V')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">V</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'S')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-normal text-red-500">S</button>
+                                        <button type="button" onclick="toggleDaySel(this, 'D')" class="day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-normal text-red-500">D</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <button onclick="guardarAlarma()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-3 text-sm transition shadow mt-4">
+                            Programar Alarma
+                        </button>
+                    </div>
+
+                    <!-- Lista de Alarmas -->
+                    <div class="md:col-span-2 bg-white/90 dark:bg-dark-800/90 p-6 rounded-2xl border border-gray-100/50 dark:border-gray-700/50 shadow-sm backdrop-blur-md">
+                        <h2 class="text-lg font-bold mb-4">Alarmas Programadas</h2>
+                        <div id="alarms-list" class="space-y-3">
+                            <!-- JS inyectará las alarmas -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VISTA: NOTAS RÁPIDAS -->
+            <section id="view-notes" class="view-section hidden max-w-6xl mx-auto space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">Mis Notas Rápidas</h2>
+                    <button onclick="crearNotaNueva()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-md flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Nueva Nota
+                    </button>
+                </div>
+
+                <div id="notes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+                    <!-- JS inyectará las notas en post-it -->
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL: ASIGNAR CLASE AL HORARIO (Modo creación y edición) -->
+    <div id="modal-class" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl shadow-xl w-full max-w-md p-6 transform scale-95 transition-transform duration-200" id="modal-class-content">
+            <h3 class="text-lg font-bold mb-4">Asignar Materia al Horario</h3>
+            <form id="form-schedule-slot" class="space-y-4">
+                <!-- Autocompletado del nombre de Materia -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Nombre del Curso / Materia</label>
+                    <input type="text" id="slot-course-name" list="courses-datalist-schedule" placeholder="Escribe el nombre de la materia..." required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                    <datalist id="courses-datalist-schedule"></datalist>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Día de la Semana</label>
+                        <select id="slot-day" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Hora de Inicio (Editable)</label>
+                        <input type="time" id="slot-time" required class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Aula / Salón / Profesor</label>
+                    <input type="text" id="slot-details" placeholder="Ej. Aula 102 - Prof. Gómez" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none dark:text-white">
+                </div>
+
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="cerrarModal('modal-class')" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold">Asignar Clase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PERSONALIZAR HORAS -->
+    <div id="modal-hours" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl shadow-xl w-full max-w-sm p-6 transform scale-95 transition-transform duration-200" id="modal-hours-content">
+            <h3 class="text-lg font-bold mb-4">Personalizar Bloques de Horas</h3>
+            
+            <form id="form-new-hour" class="flex gap-2 mb-4">
+                <input type="time" id="new-hour-val" required value="08:00" class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-sm focus:outline-none dark:text-white">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700">Agregar Bloque</button>
+            </form>
+
+            <div class="border-t border-gray-100/30 dark:border-gray-700/30 pt-4">
+                <h4 class="text-xs font-semibold text-gray-400 mb-2">Bloques de Hora Activos</h4>
+                <div id="hours-custom-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-2">
+                    <!-- JS listará las horas -->
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6">
+                <button type="button" onclick="cerrarModal('modal-hours')" class="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Listo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE ALARMA ACTIVA -->
+    <div id="alarm-trigger-screen" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex-col items-center justify-center z-50 p-6 alarm-flash text-center">
+        <div class="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center text-white text-4xl shadow-2xl mb-6 animate-bounce">
+            <i class="fa-solid fa-bell"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white mb-2" id="alarm-trigger-title">ALERTA PROGRAMADA</h2>
+        <p class="text-xl text-red-200 font-semibold mb-8" id="alarm-trigger-label">Despertador de Examen</p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-xs">
+            <button onclick="posponerAlarmaActiva()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-950 font-extrabold p-4 rounded-2xl shadow-lg text-sm transition">
+                <i class="fa-solid fa-clock"></i> Posponer 5 Minutos
+            </button>
+            <button onclick="apagarAlarmaActiva()" class="w-full bg-white hover:bg-gray-100 text-red-600 font-extrabold p-4 rounded-2xl shadow-lg text-sm transition">
+                <i class="fa-solid fa-bell-slash"></i> Apagar Alarma
+            </button>
+        </div>
+    </div>
+
+    <!-- MODALES DEL SISTEMA (REEMPLAZO DE ALERT / CONFIRM) -->
+    <div id="custom-alert-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center transform scale-95 transition-transform duration-200">
+            <h3 class="text-lg font-bold mb-2 text-blue-600 dark:text-blue-400" id="alert-modal-title">Aviso</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6" id="alert-modal-message">Mensaje informativo.</p>
+            <button onclick="cerrarAlertModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition">Entendido</button>
+        </div>
+    </div>
+
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white dark:bg-dark-800 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center transform scale-95 transition-transform duration-200">
+            <h3 class="text-lg font-bold mb-2 text-red-500" id="confirm-modal-title">¿Estás seguro?</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-300 mb-6" id="confirm-modal-message">Esta acción es permanente.</p>
+            <div class="flex gap-3">
+                <button onclick="cerrarConfirmModal(false)" class="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-600 dark:text-gray-300 font-semibold py-3 rounded-xl text-sm transition">Cancelar</button>
+                <button onclick="cerrarConfirmModal(true)" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl text-sm transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PERFIL DE USUARIO -->
+    <div id="modal-profile" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 transition-opacity duration-200 opacity-0">
+        <div class="bg-white dark:bg-dark-800 rounded-3xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform duration-200" id="modal-profile-content">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-gear text-blue-500"></i> Mi Perfil Planix
+                </h3>
+                <button onclick="cerrarModal('modal-profile')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form id="form-profile" onsubmit="event.preventDefault(); guardarPerfil();" class="space-y-4">
+                <!-- Selector de Imagen de Perfil -->
+                <div class="flex flex-col items-center gap-3 py-2 bg-gray-50/50 dark:bg-dark-900/40 rounded-2xl border border-gray-100/50 dark:border-gray-800/50">
+                    <div class="relative w-24 h-24 rounded-full border-4 border-blue-500/30 overflow-hidden shadow-inner flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-dark-700 dark:to-dark-800">
+                        <img id="profile-preview-img" src="" class="w-full h-full object-cover hidden">
+                        <i id="profile-preview-placeholder" class="fa-solid fa-user text-3xl text-gray-400 dark:text-gray-600"></i>
+                    </div>
+                    <label class="cursor-pointer bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 text-blue-600 dark:text-blue-400 text-xs font-bold px-4 py-2 rounded-xl transition-all border border-blue-100/50 dark:border-blue-800/30">
+                        <i class="fa-solid fa-camera mr-1"></i> Seleccionar Foto
+                        <input type="file" id="profile-image-input" accept="image/*" class="hidden" onchange="cargarPrevisualizacionPerfil(this)">
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Nombre o Apodo</label>
+                        <input type="text" id="profile-name" required placeholder="Ej. Alex" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Apellido</label>
+                        <input type="text" id="profile-lastname" placeholder="Ej. Silva" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Edad</label>
+                    <input type="number" id="profile-age" min="0" max="120" placeholder="Ej. 16" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white font-medium">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-4 border-t border-gray-100/40 dark:border-gray-700/40">
+                    <button type="button" onclick="cerrarModal('modal-profile')" class="px-5 py-3 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl font-medium">Cancelar</button>
+                    <button type="submit" class="px-5 py-3 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition shadow-md">Guardar Perfil</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* --- BASE DE DATOS LOCAL (PERSISTENCIA CON LOCALSTORAGE) --- */
+        const DB_KEY = 'planix_db_system_v1';
+        
+        const defaultDB = {
+            cursos: [
+                { id: 'c1', nombre: 'Matemáticas', color: '#ef4444' },
+                { id: 'c2', nombre: 'Ciencias', color: '#22c55e' },
+                { id: 'c3', nombre: 'Historia', color: '#f59e0b' }
+            ],
+            horario: [
+                { id: 'h1', cursoId: 'c1', dia: 'Lunes', hora: '08:00', lugar: 'Aula 201' },
+                { id: 'h2', cursoId: 'c2', dia: 'Martes', hora: '09:00', lugar: 'Laboratorio' },
+                { id: 'h3', cursoId: 'c3', dia: 'Miércoles', hora: '10:00', lugar: 'Aula 304' }
+            ],
+            tareas: [
+                {
+                    id: 't1',
+                    titulo: 'Examen de Álgebra y Funciones',
+                    prioridad: 'alta',
+                    colorAlerta: '#ef4444',
+                    emoji: '📚',
+                    descripcion: 'Temas: Ecuaciones de 2do grado y parábolas. Llevar calculadora científica.',
+                    curso: 'Matemáticas',
+                    dia: '21',
+                    mes: '5',
+                    anio: '2026',
+                    completed: false,
+                    recordatorioHora: true,
+                    alarmaId: 'ta-1',
+                    horaAlarma: '08:30'
+                }
+            ],
+            alarmas: [
+                { id: 'a1', hora: '07:00', dias: ['L', 'M', 'X', 'J', 'V'], etiqueta: 'Despertador Planix', sonido: 'melodic', activo: true }
+            ],
+            notas: [
+                {
+                    id: 'n1',
+                    texto: 'Ideas para el proyecto de ciencias:\n- Energía solar casera\n- Purificación de agua con filtros naturales',
+                    colorFondo: '#fef08a',
+                    colorTexto: '#1e293b',
+                    fuente: 'Sans',
+                    bold: false,
+                    italic: false,
+                    underline: false,
+                    imagen: null
+                }
+            ],
+            stats: {
+                minutosEstudio: 0,
+                completedSessions: 0
+            },
+            darkMode: false,
+            customBg: null, // Guardará el color de fondo personalizado de la app
+            horasPersonalizadas: ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+            timerSettings: {
+                studyHours: 0,
+                studyMinutes: 25,
+                breakHours: 0,
+                breakMinutes: 5
+            },
+            customAudios: {},
+            profile: {
+                nombre: 'Estudiante',
+                apellido: 'Pro',
+                edad: '',
+                imagen: null
+            }
+        };
+
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || defaultDB;
+
+        // Mecanismo de seguridad
+        if (!db.notas) {
+            db.notas = db.notes || [];
+        }
+        if (db.notes) {
+            delete db.notes;
+        }
+        if (!db.cursos) db.cursos = [];
+        if (!db.horario) db.horario = [];
+        if (!db.tareas) db.tareas = [];
+        if (!db.alarmas) db.alarmas = [];
+        if (!db.horasPersonalizadas) db.horasPersonalizadas = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'];
+        if (!db.stats) db.stats = { minutosEstudio: 0, completedSessions: 0 };
+        if (!db.customAudios) db.customAudios = {};
+        if (!db.profile) {
+            db.profile = {
+                nombre: 'Estudiante',
+                apellido: 'Pro',
+                edad: '',
+                imagen: null
+            };
+        }
+
+        // Guarda y refresca todas las interfaces
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+            renderAll();
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control de fondo personalizado... --- */
+        // Aplicar Fondo de App
+        function aplicarFondoApp() {
+            const picker = document.getElementById('app-bg-picker');
+            const pickerMobile = document.getElementById('app-bg-picker-mobile');
+            
+            if (db.customBg) {
+                document.documentElement.style.setProperty('--custom-bg', db.customBg);
+                document.body.style.backgroundColor = db.customBg;
+                if (picker) picker.value = db.customBg;
+                if (pickerMobile) pickerMobile.value = db.customBg;
+            } else {
+                document.documentElement.style.removeProperty('--custom-bg');
+                document.body.style.backgroundColor = '';
+                const defaultColor = db.darkMode ? '#0f172a' : '#f9fafb';
+                if (picker) picker.value = defaultColor;
+                if (pickerMobile) pickerMobile.value = defaultColor;
+            }
+        }
+
+        function cambiarFondoApp(color) {
+            db.customBg = color;
+            saveDB();
+            aplicarFondoApp();
+        }
+
+        function resetearFondoApp() {
+            db.customBg = null;
+            saveDB();
+            aplicarFondoApp();
+        }
+
+        // Sistema de notificaciones personalizadas
+        function showNotificationModal(title, msg) {
+            document.getElementById('alert-modal-title').innerText = title;
+            document.getElementById('alert-modal-message').innerText = msg;
+            
+            const modal = document.getElementById('custom-alert-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function cerrarAlertModal() {
+            const modal = document.getElementById('custom-alert-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+
+        let confirmCallback = null;
+        function showConfirmModal(msg, callback) {
+            document.getElementById('confirm-modal-message').innerText = msg;
+            confirmCallback = callback;
+            
+            const modal = document.getElementById('custom-confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function cerrarConfirmModal(accepted) {
+            const modal = document.getElementById('custom-confirm-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                if (accepted && confirmCallback) confirmCallback();
+                confirmCallback = null;
+            }, 200);
+        }
+
+        function confirmarReseteoCompleto() {
+            showConfirmModal("¿Estás completamente seguro de borrar todos tus cursos, tareas, notas y configuraciones de Planix? Esta acción no se puede deshacer.", () => {
+                db = JSON.parse(JSON.stringify(defaultDB));
+                saveDB();
+                location.reload();
+            });
+        }
+
+        /* --- STREAMING_CHUNK: Creando el motor de alarma sintetizado... --- */
+        /* --- AUDIO SYNTHESIZER ENGINE & ALARM SCHEDULER --- */
+        let audioContext = null;
+        let alarmLoopInterval = null;
+        let currentCustomAudioPlaying = null;
+
+        function playSynthBeep(freq, type, duration) {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+                
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + duration);
+            } catch(e) {
+                console.error("Audio error: ", e);
+            }
+        }
+
+        let isAlarmTriggered = false;
+        let triggeredAlarmObj = null;
+        let synthAlarmTimer = null;
+
+        function triggerAlarm(alarmObj) {
+            if (isAlarmTriggered) return;
+            isAlarmTriggered = true;
+            triggeredAlarmObj = alarmObj;
+
+            document.getElementById('alarm-trigger-label').innerText = alarmObj.etiqueta || "Alerta Programada";
+            document.getElementById('alarm-trigger-title').innerText = alarmObj.hora;
+            document.getElementById('alarm-trigger-screen').classList.remove('hidden');
+            document.getElementById('alarm-trigger-screen').classList.add('flex');
+
+            sendSystemNotification("¡Planix Alarma!", `${alarmObj.etiqueta || 'Alarma'} - ${alarmObj.hora}`);
+            playAlarmSoundLoop(alarmObj);
+        }
+
+        function playAlarmSoundLoop(alarmObj) {
+            let soundType = alarmObj.sonido || 'beep';
+            let customAudioBase64 = db.customAudios[soundType];
+
+            if (customAudioBase64) {
+                try {
+                    const audioSrc = "data:audio/mp3;base64," + customAudioBase64;
+                    currentCustomAudioPlaying = new Audio(audioSrc);
+                    currentCustomAudioPlaying.loop = true;
+                    currentCustomAudioPlaying.play();
+                } catch(e) {
+                    console.error("No se pudo reproducir el sonido subido, usando Beep por defecto.", e);
+                    soundType = 'beep';
+                }
+            }
+
+            if (!customAudioBase64) {
+                let beatCount = 0;
+                synthAlarmTimer = setInterval(() => {
+                    beatCount++;
+                    if (soundType === 'beep') {
+                        playSynthBeep(880, 'sine', 0.2);
+                        setTimeout(() => playSynthBeep(880, 'sine', 0.2), 300);
+                    } else if (soundType === 'digital') {
+                        playSynthBeep(1200, 'square', 0.1);
+                        setTimeout(() => playSynthBeep(1500, 'square', 0.1), 150);
+                    } else if (soundType === 'melodic') {
+                        const notes = [523.25, 659.25, 783.99, 1046.50];
+                        playSynthBeep(notes[beatCount % 4], 'sine', 0.4);
+                    } else if (soundType === 'siren') {
+                        playSynthBeep(600 + Math.sin(beatCount) * 200, 'sawtooth', 0.4);
+                    }
+                }, 800);
+            }
+        }
+
+        function apagarAlarmaActiva() {
+            detenerSonidosAlarmas();
+            document.getElementById('alarm-trigger-screen').classList.add('hidden');
+            document.getElementById('alarm-trigger-screen').classList.remove('flex');
+            isAlarmTriggered = false;
+            triggeredAlarmObj = null;
+        }
+
+        function posponerAlarmaActiva() {
+            detenerSonidosAlarmas();
+            document.getElementById('alarm-trigger-screen').classList.add('hidden');
+            document.getElementById('alarm-trigger-screen').classList.remove('flex');
+            
+            if (triggeredAlarmObj) {
+                const d = new Date();
+                d.setMinutes(d.getMinutes() + 5);
+                const h = String(d.getHours()).padStart(2, '0');
+                const m = String(d.getMinutes()).padStart(2, '0');
+                const snoozeAlarm = {
+                    id: 'snooze-' + Date.now(),
+                    hora: `${h}:${m}`,
+                    dias: [],
+                    etiqueta: "Pospuesto: " + (triggeredAlarmObj.etiqueta || "Alarma"),
+                    sonido: triggeredAlarmObj.sonido,
+                    activo: true,
+                    snooze: true
+                };
+                db.alarmas.push(snoozeAlarm);
+                saveDB();
+            }
+            isAlarmTriggered = false;
+            triggeredAlarmObj = null;
+        }
+
+        function detenerSonidosAlarmas() {
+            if (synthAlarmTimer) {
+                clearInterval(synthAlarmTimer);
+                synthAlarmTimer = null;
+            }
+            if (currentCustomAudioPlaying) {
+                try {
+                    currentCustomAudioPlaying.pause();
+                    currentCustomAudioPlaying.currentTime = 0;
+                } catch(e){}
+                currentCustomAudioPlaying = null;
+            }
+        }
+
+        function escanearAlarmasPlanix() {
+            const ahora = new Date();
+            const horas = String(ahora.getHours()).padStart(2, '0');
+            const minutos = String(ahora.getMinutes()).padStart(2, '0');
+            const horaActualStr = `${horas}:${minutos}`;
+            const segundos = ahora.getSeconds();
+            
+            if (segundos !== 0) return;
+
+            const diasSemanaMapa = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+            const diaDeHoyFiltro = diasSemanaMapa[ahora.getDay()];
+
+            db.alarmas.forEach(al => {
+                if (!al.activo) return;
+                
+                if (al.hora === horaActualStr) {
+                    if (al.dias.length === 0 || al.dias.includes(diaDeHoyFiltro)) {
+                        triggerAlarm(al);
+                        if (al.dias.length === 0 && !al.snooze) {
+                            al.activo = false;
+                        }
+                    }
+                }
+            });
+
+            db.alarmas = db.alarmas.filter(al => !(al.snooze && al.hora === horaActualStr));
+
+            const diaHoy = String(ahora.getDate());
+            const mesHoy = String(ahora.getMonth() + 1);
+            const anioHoy = String(ahora.getFullYear());
+
+            db.tareas.forEach(t => {
+                if (t.completed || !t.recordatorioHora) return;
+                if (t.dia == diaHoy && t.mes == mesHoy && t.anio == anioHoy) {
+                    if (t.horaAlarma === horaActualStr) {
+                        triggerAlarm({
+                            hora: t.horaAlarma,
+                            etiqueta: `${t.emoji || '⚠️'} ${t.titulo}`,
+                            sonido: 'melodic',
+                            dias: []
+                        });
+                    }
+                }
+            });
+        }
+
+        /* --- STREAMING_CHUNK: Creando la navegación y el tema dinámico... --- */
+        /* --- NAVEGACIÓN Y CONFIGURACIÓN --- */
+        const els = {
+            views: document.querySelectorAll('.view-section'),
+            navBtns: document.querySelectorAll('.nav-btn'),
+            title: document.getElementById('page-title'),
+            html: document.documentElement
+        };
+
+        function nav(viewId) {
+            els.views.forEach(v => v.classList.add('hidden'));
+            els.navBtns.forEach(b => {
+                b.classList.remove('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20', 'font-medium');
+                b.classList.add('text-gray-500', 'hover:text-gray-950', 'dark:hover:text-white');
+            });
+            
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${viewId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-gray-500', 'hover:text-gray-950', 'dark:hover:text-white');
+                activeBtn.classList.add('text-blue-600', 'dark:text-blue-400', 'bg-blue-50', 'dark:bg-blue-900/20', 'font-medium');
+            }
+            
+            const titles = {
+                'dashboard': 'Inicio', 'schedule': 'Horario Semanal', 
+                'tasks': 'Tareas y Actividades', 'timer': 'Temporizador',
+                'alarms': 'Alarmas', 'notes': 'Notas Rápidas'
+            };
+            els.title.textContent = titles[viewId] || 'Planix';
+        }
+
+        function toggleDarkMode() {
+            db.darkMode = !db.darkMode;
+            if (db.darkMode) {
+                els.html.classList.add('dark');
+                els.html.classList.remove('light');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-yellow-400 text-lg';
+                document.getElementById('theme-text').textContent = 'Modo Claro';
+            } else {
+                els.html.classList.remove('dark');
+                els.html.classList.add('light');
+                document.getElementById('theme-icon').className = 'fa-solid fa-moon text-lg';
+                document.getElementById('theme-text').textContent = 'Modo Oscuro';
+            }
+            aplicarFondoApp();
+            saveDB();
+        }
+
+        /* --- STREAMING_CHUNK: Renderizando la vista del Dashboard... --- */
+        /* --- DASHBOARD LÓGICA --- */
+        function renderDashboard() {
+            const completed = db.tareas.filter(t => t.completed).length;
+            const studyTime = db.stats.minutosEstudio || 0;
+            const activeAlarms = db.alarmas.filter(al => al.activo).length;
+
+            document.getElementById('stat-tasks-done').textContent = completed;
+            document.getElementById('stat-study-time').textContent = studyTime + 'm';
+            document.getElementById('stat-alarms-active').textContent = activeAlarms;
+
+            const listUrgentes = document.getElementById('dash-urgent-tasks');
+            listUrgentes.innerHTML = '';
+
+            const urgentes = db.tareas.filter(t => !t.completed).sort((a,b) => {
+                const dateA = new Date(a.anio, a.mes - 1, a.dia);
+                const dateB = new Date(b.anio, b.mes - 1, b.dia);
+                return dateA - dateB;
+            });
+
+            if (urgentes.length === 0) {
+                listUrgentes.innerHTML = `
+                    <div class="text-center py-6 text-gray-400">
+                        <i class="fa-solid fa-square-check text-3xl mb-1 text-green-400"></i>
+                        <p class="text-xs">¡Excelente! Tienes todas tus tareas escolares y exámenes al día.</p>
+                    </div>
+                `;
+            } else {
+                urgentes.forEach(t => {
+                    const statusRecordatorio = t.recordatorioHora ? `<span class="text-[10px] bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-lg font-bold flex items-center gap-1"><i class="fa-solid fa-clock"></i> Alerta ${t.horaAlarma}</span>` : '';
+                    
+                    listUrgentes.innerHTML += `
+                        <div class="p-4 rounded-2xl border-l-4 bg-white/60 dark:bg-dark-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 backdrop-blur-md" style="border-left-color: ${t.colorAlerta}">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-base">${t.emoji || '📌'}</span>
+                                    <h4 class="font-bold text-sm text-gray-900 dark:text-white">${t.titulo}</h4>
+                                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700">${t.curso}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">${t.descripcion || 'Sin descripción.'}</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                ${statusRecordatorio}
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300"><i class="fa-regular fa-calendar"></i> ${t.dia}/${t.mes}/${t.anio}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const badge = document.getElementById('notification-badge');
+            if (urgentes.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function abrirAlertaRapida() {
+            const count = db.tareas.filter(t => !t.completed).length;
+            showNotificationModal("Organizador Escolar", count > 0 ? `Tienes ${count} pendientes por realizar. ¡Planifica tu tiempo de estudio!` : "¡No tienes tareas ni exámenes pendientes!");
+        }
+
+        /* --- STREAMING_CHUNK: Lógica para gestionar el perfil del usuario... --- */
+        /* --- PERFIL DE USUARIO LÓGICA --- */
+        function abrirModalPerfil() {
+            document.getElementById('profile-name').value = db.profile.nombre || '';
+            document.getElementById('profile-lastname').value = db.profile.apellido || '';
+            document.getElementById('profile-age').value = db.profile.edad || '';
+            
+            const previewImg = document.getElementById('profile-preview-img');
+            const placeholder = document.getElementById('profile-preview-placeholder');
+            
+            if (db.profile.imagen) {
+                previewImg.src = db.profile.imagen;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                previewImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+
+            document.getElementById('profile-image-input').value = ''; // Reset uploader input
+
+            const modal = document.getElementById('modal-profile');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function cargarPrevisualizacionPerfil(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImg = document.getElementById('profile-preview-img');
+                const placeholder = document.getElementById('profile-preview-placeholder');
+                
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                
+                // Guardar la data temporalmente en la imagen para lectura al guardar
+                previewImg.dataset.base64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function guardarPerfil() {
+            const nombre = document.getElementById('profile-name').value.trim();
+            const apellido = document.getElementById('profile-lastname').value.trim();
+            const edad = document.getElementById('profile-age').value;
+            
+            const previewImg = document.getElementById('profile-preview-img');
+            const nuevaImagen = previewImg.dataset.base64 || db.profile.imagen;
+
+            db.profile = {
+                nombre: nombre || 'Estudiante',
+                apellido: apellido || 'Pro',
+                edad: edad,
+                imagen: nuevaImagen
+            };
+
+            // Limpiar datos temporales de lectura
+            delete previewImg.dataset.base64;
+
+            saveDB();
+            actualizarCabeceraPerfil();
+            cerrarModal('modal-profile');
+            showNotificationModal("Perfil Actualizado", "Tu información de perfil se ha guardado correctamente.");
+        }
+
+        function actualizarCabeceraPerfil() {
+            const container = document.getElementById('header-avatar-container');
+            if (!container) return;
+
+            if (db.profile && db.profile.imagen) {
+                container.innerHTML = `<img src="${db.profile.imagen}" class="w-full h-full object-cover" alt="Perfil">`;
+            } else {
+                container.innerHTML = `<i class="fa-solid fa-user text-sm"></i>`;
+            }
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control de horario dinámico... --- */
+        /* --- HORARIO LÓGICA --- */
+        function renderHorario() {
+            const grid = document.getElementById('schedule-grid');
+            grid.innerHTML = '';
+
+            const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            db.horasPersonalizadas.sort();
+
+            if (db.horasPersonalizadas.length === 0) {
+                grid.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-gray-400 font-medium">No has definido bloques de hora. Haz clic en "Horas".</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            db.horasPersonalizadas.forEach(hora => {
+                let rowHtml = `<tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
+                    <td class="py-4 px-3 font-mono font-bold text-gray-600 dark:text-gray-400 text-xs border-r border-gray-100/50 dark:border-gray-800/50">${hora}</td>`;
+                
+                dias.forEach(dia => {
+                    const clase = db.horario.find(cl => cl.dia === dia && cl.hora === hora);
+                    if (clase) {
+                        const cursoObj = db.cursos.find(c => c.id === clase.cursoId) || { nombre: clase.cursoId, color: '#3b82f6' };
+                        rowHtml += `
+                            <td class="p-1 text-center align-middle">
+                                <div onclick="editarClaseHorario('${clase.id}')" class="p-2.5 rounded-xl border flex flex-col items-center justify-center relative group shadow-sm transition-all duration-200 cursor-pointer hover:scale-105" style="background-color: ${cursoObj.color}15; border-color: ${cursoObj.color}60; border-left-width: 4px; border-left-color: ${cursoObj.color}">
+                                    <span class="font-bold text-gray-900 dark:text-white truncate max-w-full">${cursoObj.nombre}</span>
+                                    <span class="text-[9px] text-gray-500 dark:text-gray-400 truncate mt-0.5">${clase.lugar || ''}</span>
+                                    <button onclick="event.stopPropagation(); eliminarClaseHorario('${clase.id}')" class="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center shadow transition-opacity">
+                                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                    } else {
+                        rowHtml += `
+                            <td class="p-1 border-r border-dashed border-gray-100/50 dark:border-gray-800/50 text-center align-middle">
+                                <button onclick="dispararAsignacionCelda('${dia}', '${hora}')" class="schedule-slot-empty w-full h-12 rounded-xl border border-transparent flex items-center justify-center text-gray-300 dark:text-gray-600 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-150">
+                                    <i class="fa-solid fa-plus text-sm"></i>
+                                </button>
+                            </td>
+                        `;
+                    }
+                });
+
+                rowHtml += '</tr>';
+                grid.innerHTML += rowHtml;
+            });
+
+            actualizarDatalistCursos();
+        }
+
+        function dispararAsignacionCelda(dia, hora) {
+            abrirModalClase(false);
+            document.getElementById('slot-day').value = dia;
+            document.getElementById('slot-time').value = hora;
+        }
+
+        function editarClaseHorario(claseId) {
+            const clase = db.horario.find(cl => cl.id === claseId);
+            if (!clase) return;
+            const cursoObj = db.cursos.find(c => c.id === clase.cursoId);
+            
+            abrirModalClase(true);
+            document.getElementById('slot-course-name').value = cursoObj ? cursoObj.nombre : '';
+            document.getElementById('slot-day').value = clase.dia;
+            document.getElementById('slot-time').value = clase.hora;
+            document.getElementById('slot-details').value = clase.lugar || '';
+            
+            document.getElementById('form-schedule-slot').dataset.editingId = claseId;
+        }
+
+        function actualizarDatalistCursos() {
+            const dl = document.getElementById('courses-datalist');
+            const dlSchedule = document.getElementById('courses-datalist-schedule');
+            
+            let options = '';
+            db.cursos.forEach(c => {
+                options += `<option value="${c.nombre}"></option>`;
+            });
+            
+            if (dl) dl.innerHTML = options;
+            if (dlSchedule) dlSchedule.innerHTML = options;
+        }
+
+        function guardarClaseHorario(nombreMateria, dia, hora, lugar, editingId = null) {
+            let cursoObj = db.cursos.find(c => c.nombre.toLowerCase() === nombreMateria.toLowerCase().trim());
+            if (!cursoObj) {
+                const coloresValidos = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#6366f1', '#a855f7', '#ec4899'];
+                const colorRnd = coloresValidos[Math.floor(Math.random() * coloresValidos.length)];
+                cursoObj = {
+                    id: 'c-' + Date.now(),
+                    nombre: nombreMateria.trim(),
+                    color: colorRnd
+                };
+                db.cursos.push(cursoObj);
+            }
+
+            if (hora && !db.horasPersonalizadas.includes(hora)) {
+                db.horasPersonalizadas.push(hora);
+                db.horasPersonalizadas.sort();
+            }
+
+            if (editingId) {
+                const index = db.horario.findIndex(cl => cl.id === editingId);
+                if (index !== -1) {
+                    db.horario[index] = {
+                        id: editingId,
+                        cursoId: cursoObj.id,
+                        dia: dia,
+                        hora: hora,
+                        lugar: lugar
+                    };
+                }
+            } else {
+                db.horario = db.horario.filter(cl => !(cl.dia === dia && cl.hora === hora));
+                db.horario.push({
+                    id: 'cl-' + Date.now(),
+                    cursoId: cursoObj.id,
+                    dia: dia,
+                    hora: hora,
+                    lugar: lugar
+                });
+            }
+
+            saveDB();
+        }
+
+        function eliminarClaseHorario(id) {
+            db.horario = db.horario.filter(cl => cl.id !== id);
+            saveDB();
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control de personalización de horas... --- */
+        /* --- HORAS PERSONALIZADAS --- */
+        function renderModalHoras() {
+            const list = document.getElementById('hours-custom-list');
+            list.innerHTML = '';
+            db.horasPersonalizadas.sort();
+
+            db.horasPersonalizadas.forEach(h => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-100/50 dark:border-gray-800/50">
+                        <span class="font-mono text-xs font-bold">${h}</span>
+                        <button onclick="eliminarHoraPersonalizada('${h}')" class="text-red-500 hover:text-red-600 text-xs p-1"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function agregarHoraPersonalizada(nuevaHora) {
+            if (db.horasPersonalizadas.includes(nuevaHora)) {
+                showNotificationModal("Horas", "Este bloque de hora ya ha sido configurado.");
+                return;
+            }
+            db.horasPersonalizadas.push(nuevaHora);
+            db.horasPersonalizadas.sort();
+            renderModalHoras();
+            saveDB();
+        }
+
+        function eliminarHoraPersonalizada(hora) {
+            showConfirmModal(`¿Eliminar la hora ${hora}? También se borrarán las clases asignadas a esta hora.`, () => {
+                db.horasPersonalizadas = db.horasPersonalizadas.filter(h => h !== hora);
+                db.horario = db.horario.filter(cl => cl.hora !== hora);
+                renderModalHoras();
+                saveDB();
+            });
+        }
+
+        /* --- STREAMING_CHUNK: Creando el sistema para gestionar las tareas... --- */
+        /* --- TAREAS Y PENDIENTES LÓGICA --- */
+        let activeTaskFilter = 'all';
+
+        function setTaskFilter(filter) {
+            activeTaskFilter = filter;
+            document.getElementById('filter-task-all').className = filter === 'all' ? 'text-xs px-3 py-1.5 rounded-lg font-medium bg-white dark:bg-gray-600 shadow text-gray-800 dark:text-white' : 'text-xs px-3 py-1.5 rounded-lg font-medium text-gray-500 hover:text-gray-800 dark:hover:text-white';
+            document.getElementById('filter-task-pending').className = filter === 'pending' ? 'text-xs px-3 py-1.5 rounded-lg font-medium bg-white dark:bg-gray-600 shadow text-gray-800 dark:text-white' : 'text-xs px-3 py-1.5 rounded-lg font-medium text-gray-500 hover:text-gray-800 dark:hover:text-white';
+            renderTareas();
+        }
+
+        function renderTareas() {
+            const container = document.getElementById('tasks-list');
+            container.innerHTML = '';
+
+            let filtered = db.tareas;
+            if (activeTaskFilter === 'pending') {
+                filtered = db.tareas.filter(t => !t.completed);
+            }
+
+            filtered.sort((a,b) => {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                const dateA = new Date(a.anio, a.mes - 1, a.dia);
+                const dateB = new Date(b.anio, b.mes - 1, b.dia);
+                return dateA - dateB;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-gray-400">
+                        <i class="fa-regular fa-clipboard text-4xl mb-2"></i>
+                        <p class="text-sm">No hay tareas o pendientes en esta categoría.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const isOverdue = !t.completed && (new Date(t.anio, t.mes - 1, t.dia) < new Date().setHours(0,0,0,0));
+                
+                let priorityLabel = '';
+                if (t.prioridad === 'alta') priorityLabel = '<span class="text-[10px] bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-md font-bold">Alta</span>';
+                if (t.prioridad === 'media') priorityLabel = '<span class="text-[10px] bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 px-2 py-0.5 rounded-md font-bold">Media</span>';
+                if (t.prioridad === 'baja') priorityLabel = '<span class="text-[10px] bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-md font-bold">Baja</span>';
+
+                const recordatorioBadge = t.recordatorioHora ? `<span class="text-[10px] bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 px-2 py-0.5 rounded-md font-bold flex items-center gap-1"><i class="fa-solid fa-clock"></i> Alerta ${t.horaAlarma}</span>` : '';
+
+                container.innerHTML += `
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white/60 dark:bg-dark-800/60 border border-gray-100/50 dark:border-gray-700/50 shadow-sm transition-all group backdrop-blur-md ${t.completed ? 'opacity-60 bg-white' : ''}" style="border-left-width: 6px; border-left-color: ${t.colorAlerta}">
+                        
+                        <label class="flex items-center cursor-pointer relative mt-1">
+                            <input type="checkbox" class="sr-only checkbox-custom" ${t.completed ? 'checked' : ''} onchange="toggleCompletadoTarea('${t.id}')">
+                            <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-full flex items-center justify-center transition-colors">
+                                <svg class="w-4 h-4 text-white hidden pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                        </label>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                                <span class="text-base">${t.emoji || '📌'}</span>
+                                <h4 class="font-bold text-sm text-gray-900 dark:text-white truncate ${t.completed ? 'line-through text-gray-400' : ''}">${t.titulo}</h4>
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-lg bg-gray-200 dark:bg-gray-700">${t.curso}</span>
+                                ${priorityLabel}
+                                ${recordatorioBadge}
+                            </div>
+                            
+                            ${t.descripcion ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-2 whitespace-pre-line">${t.descripcion}</p>` : ''}
+                            
+                            <div class="flex items-center gap-2 text-xs font-semibold ${isOverdue ? 'text-red-500' : 'text-gray-500'}">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Vence: ${t.dia}/${t.mes}/${t.anio} ${isOverdue ? '(Vencido)' : ''}</span>
+                            </div>
+                        </div>
+
+                        <button onclick="eliminarTarea('${t.id}')" class="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleCompletadoTarea(id) {
+            const t = db.tareas.find(ta => ta.id === id);
+            if (t) {
+                t.completed = !t.completed;
+                saveDB();
+            }
+        }
+
+        function eliminarTarea(id) {
+            db.tareas = db.tareas.filter(t => t.id !== id);
+            saveDB();
+        }
+
+        /* --- STREAMING_CHUNK: Creando el reloj para controlar el Pomodoro... --- */
+        /* --- TEMPORIZADOR LÓGICA --- */
+        let timerInterval = null;
+        let timeLeft = 0; 
+        let currentTimerMode = 'study'; 
+        let timerIsRunning = false;
+
+        function updateTimerDisplay() {
+            const h = Math.floor(timeLeft / 3600);
+            const m = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            
+            const displayStr = h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
+            document.getElementById('pomo-timer').innerText = displayStr;
+        }
+
+        function setTimerMode(mode) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerIsRunning = false;
+            currentTimerMode = mode;
+
+            document.getElementById('btn-timer-toggle').innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+            document.getElementById('btn-timer-toggle').className = 'w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition';
+
+            const btnStudy = document.getElementById('btn-quick-work');
+            const btnBreak = document.getElementById('btn-quick-break');
+            const modeLabel = document.getElementById('timer-mode-label');
+
+            if (mode === 'study') {
+                btnStudy.className = 'flex-1 py-2 rounded-xl text-xs font-semibold transition bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400 font-bold';
+                btnBreak.className = 'flex-1 py-2 rounded-xl text-xs font-semibold transition text-gray-500 hover:text-gray-900 dark:hover:text-white font-bold';
+                modeLabel.innerText = 'Concentración';
+                modeLabel.className = 'text-xs font-bold text-blue-500 tracking-wider uppercase mb-1';
+
+                const sHours = db.timerSettings?.studyHours || 0;
+                const sMins = db.timerSettings?.studyMinutes || 25;
+                timeLeft = (sHours * 3600) + (sMins * 60);
+            } else {
+                btnStudy.className = 'flex-1 py-2 rounded-xl text-xs font-semibold transition text-gray-500 hover:text-gray-950 dark:hover:text-white font-bold';
+                btnBreak.className = 'flex-1 py-2 rounded-xl text-xs font-semibold transition bg-white dark:bg-gray-600 shadow text-green-600 dark:text-green-400 font-bold';
+                modeLabel.innerText = 'Descanso Corto';
+                modeLabel.className = 'text-xs font-bold text-green-500 tracking-wider uppercase mb-1';
+
+                const bHours = db.timerSettings?.breakHours || 0;
+                const bMins = db.timerSettings?.breakMinutes || 5;
+                timeLeft = (bHours * 3600) + (bMins * 60);
+            }
+
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer-toggle');
+            if (timerIsRunning) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerIsRunning = false;
+                btn.innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+                btn.className = 'w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition';
+            } else {
+                timerIsRunning = true;
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+                btn.className = 'w-14 h-14 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition';
+                
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        timerIsRunning = false;
+                        
+                        btn.innerHTML = '<i class="fa-solid fa-play ml-1"></i>';
+                        btn.className = 'w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg transition';
+                        
+                        playSynthBeep(1000, 'sine', 0.5);
+                        setTimeout(() => playSynthBeep(1200, 'sine', 0.5), 200);
+
+                        if (currentTimerMode === 'study') {
+                            const addMinutes = (db.timerSettings?.studyHours || 0) * 60 + (db.timerSettings?.studyMinutes || 25);
+                            db.stats.minutosEstudio += addMinutes;
+                            db.stats.completedSessions++;
+                            showNotificationModal("¡Gran Trabajo!", `Has terminado tu sesión de estudio de ${addMinutes} minutos.`);
+                            setTimerMode('break');
+                        } else {
+                            showNotificationModal("Fin del Descanso", "¡Es hora de regresar a estudiar!");
+                            setTimerMode('study');
+                        }
+                        saveDB();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            setTimerMode(currentTimerMode);
+        }
+
+        function guardarConfiguracionPomo() {
+            const studyH = parseInt(document.getElementById('pomo-study-hours').value) || 0;
+            const studyM = parseInt(document.getElementById('pomo-study-minutes').value) || 0;
+            const breakH = parseInt(document.getElementById('pomo-break-hours').value) || 0;
+            const breakM = parseInt(document.getElementById('pomo-break-minutes').value) || 0;
+
+            if (studyH === 0 && studyM === 0) {
+                showNotificationModal("Configuración", "El tiempo de estudio no puede ser de 0 minutos.");
+                return;
+            }
+
+            db.timerSettings = {
+                studyHours: studyH,
+                studyMinutes: studyM,
+                breakHours: breakH,
+                breakMinutes: breakM
+            };
+
+            showNotificationModal("Temporizador", "Tiempos configurados con éxito.");
+            setTimerMode(currentTimerMode);
+            actualizarBotonesTimer();
+            saveDB();
+        }
+
+        function actualizarBotonesTimer() {
+            const btnQuickWork = document.getElementById('btn-quick-work');
+            const btnQuickBreak = document.getElementById('btn-quick-break');
+            if (btnQuickWork && btnQuickBreak) {
+                const sH = db.timerSettings?.studyHours || 0;
+                const sM = db.timerSettings?.studyMinutes || 25;
+                const bH = db.timerSettings?.breakHours || 0;
+                const bM = db.timerSettings?.breakMinutes || 5;
+
+                const studyText = sH > 0 ? `${sH}h ${sM}m` : `${sM} min`;
+                const breakText = bH > 0 ? `${bH}h ${bM}m` : `${bM} min`;
+
+                btnQuickWork.innerText = `${studyText} (Estudio)`;
+                btnQuickBreak.innerText = `${breakText} (Descanso)`;
+            }
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control para las alertas de alarmas... --- */
+        /* --- ALARMAS LÓGICA --- */
+        let selectedRepetitionDays = [];
+
+        function toggleDaySel(btn, dayChar) {
+            if (selectedRepetitionDays.includes(dayChar)) {
+                selectedRepetitionDays = selectedRepetitionDays.filter(d => d !== dayChar);
+                btn.className = 'day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+            } else {
+                selectedRepetitionDays.push(dayChar);
+                btn.className = 'day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-blue-600 text-white';
+            }
+        }
+
+        function renderAlarmas() {
+            const container = document.getElementById('alarms-list');
+            container.innerHTML = '';
+
+            if (db.alarmas.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 text-gray-400">
+                        <i class="fa-solid fa-clock text-4xl mb-2"></i>
+                        <p class="text-sm">No has programado ninguna alarma.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            db.alarmas.forEach(al => {
+                const badgeDias = al.dias.length === 0 
+                    ? `<span class="text-[9px] bg-gray-100 dark:bg-gray-700 text-gray-500 px-2 py-0.5 rounded-lg">Una sola vez</span>` 
+                    : `<span class="text-[9px] bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-lg font-bold">Repetir: ${al.dias.join(', ')}</span>`;
+
+                container.innerHTML += `
+                    <div class="p-4 rounded-2xl bg-white/60 dark:bg-dark-900 border border-gray-100/50 dark:border-gray-800/50 flex items-center justify-between shadow-sm backdrop-blur-md">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xl">
+                                <i class="fa-solid fa-bell"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-black font-mono tracking-tight text-gray-900 dark:text-white">${al.hora}</h3>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <span class="text-xs font-bold text-gray-800 dark:text-white">${al.etiqueta || 'Alarma'}</span>
+                                    ${badgeDias}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button onclick="toggleActivarAlarma('${al.id}')" class="w-11 h-6 rounded-full transition-colors relative flex items-center ${al.activo ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}">
+                                <span class="w-4 h-4 rounded-full bg-white shadow absolute transition-transform ${al.activo ? 'translate-x-6' : 'translate-x-1'}"></span>
+                            </button>
+                            <button onclick="eliminarAlarma('${al.id}')" class="text-gray-400 hover:text-red-500 p-2 text-sm transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            actualizarSelectSonidos();
+        }
+
+        function actualizarSelectSonidos() {
+            const select = document.getElementById('alarm-sound-select');
+            select.innerHTML = `
+                <option value="beep">Clásico (Beep Beep)</option>
+                <option value="digital">Alerta Digital Retro</option>
+                <option value="melodic">Campana Melódica</option>
+                <option value="siren">Sirena de Alerta</option>
+            `;
+            Object.keys(db.customAudios).forEach(name => {
+                select.innerHTML += `<option value="${name}">🎵 [Personalizado] ${name}</option>`;
+            });
+        }
+
+        document.getElementById('alarm-custom-audio').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const base64String = evt.target.result.split(',')[1];
+                const cleanName = file.name.substring(0, 20);
+                db.customAudios[cleanName] = base64String;
+                
+                showNotificationModal("Sonido Subido", `El audio "${cleanName}" se cargó con éxito.`);
+                actualizarSelectSonidos();
+                document.getElementById('alarm-sound-select').value = cleanName;
+                saveDB();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function guardarAlarma() {
+            const hora = document.getElementById('alarm-time').value;
+            const etiqueta = document.getElementById('alarm-label').value.trim() || 'Alarma';
+            const sonido = document.getElementById('alarm-sound-select').value;
+
+            db.alarmas.push({
+                id: 'al-' + Date.now(),
+                hora: hora,
+                dias: [...selectedRepetitionDays],
+                etiqueta: etiqueta,
+                sonido: sonido,
+                activo: true
+            });
+
+            selectedRepetitionDays = [];
+            document.querySelectorAll('.day-bubble').forEach(btn => {
+                btn.className = 'day-bubble text-[10px] w-7 h-7 font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+            });
+            document.getElementById('alarm-label').value = '';
+
+            saveDB();
+        }
+
+        function toggleActivarAlarma(id) {
+            const al = db.alarmas.find(a => a.id === id);
+            if (al) {
+                al.activo = !al.activo;
+                saveDB();
+            }
+        }
+
+        function eliminarAlarma(id) {
+            db.alarmas = db.alarmas.filter(a => a.id !== id);
+            saveDB();
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control para las notas rápidas... --- */
+        /* --- NOTAS RÁPIDAS LÓGICA --- */
+        function renderNotas() {
+            const container = document.getElementById('notes-grid');
+            container.innerHTML = '';
+
+            if (!db.notas) {
+                db.notas = [];
+            }
+
+            if (db.notas.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-10 text-gray-400">
+                        <i class="fa-regular fa-note-sticky text-4xl mb-2"></i>
+                        <p class="text-sm">No hay anotaciones ni recordatorios rápidos.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            db.notas.forEach(n => {
+                const isBold = n.bold ? 'font-bold' : '';
+                const isItalic = n.italic ? 'italic' : '';
+                const isUnderline = n.underline ? 'underline' : '';
+                
+                let fontStyle = '';
+                if (n.fuente === 'Serif') fontStyle = 'font-serif';
+                if (n.fuente === 'Monospace') fontStyle = 'font-mono';
+                if (n.fuente === 'Cursive') fontStyle = 'font-cursive';
+
+                container.innerHTML += `
+                    <div class="p-5 rounded-2xl border shadow-sm relative group flex flex-col justify-between backdrop-blur-md" style="background-color: ${n.colorFondo || '#fef08a'}ef; border-color: ${n.colorFondo}80">
+                        
+                        <div>
+                            <div class="flex flex-wrap items-center gap-1.5 mb-3 pb-2 border-b border-black/10 font-sans">
+                                <input type="color" value="${n.colorFondo}" onchange="cambiarColorFondoNota('${n.id}', this.value)" class="w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent" title="Fondo">
+                                <input type="color" value="${n.colorTexto || '#1e293b'}" onchange="cambiarColorTextoNota('${n.id}', this.value)" class="w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent" title="Texto">
+                                
+                                <button onclick="toggleEstiloNota('${n.id}', 'bold')" class="text-xs w-6 h-6 flex items-center justify-center rounded hover:bg-black/10 font-black">B</button>
+                                <button onclick="toggleEstiloNota('${n.id}', 'italic')" class="text-xs w-6 h-6 flex items-center justify-center rounded hover:bg-black/10 italic">I</button>
+                                <button onclick="toggleEstiloNota('${n.id}', 'underline')" class="text-xs w-6 h-6 flex items-center justify-center rounded hover:bg-black/10 underline">U</button>
+                                
+                                <select onchange="cambiarFuenteNota('${n.id}', this.value)" class="text-[10px] bg-transparent focus:outline-none border-0 font-semibold text-black/60">
+                                    <option value="Sans" ${n.fuente === 'Sans' ? 'selected' : ''}>Sans</option>
+                                    <option value="Serif" ${n.fuente === 'Serif' ? 'selected' : ''}>Serif</option>
+                                    <option value="Monospace" ${n.fuente === 'Monospace' ? 'selected' : ''}>Mono</option>
+                                    <option value="Cursive" ${n.fuente === 'Cursive' ? 'selected' : ''}>Cursiva</option>
+                                </select>
+
+                                <button onclick="triggerFileImageNota('${n.id}')" class="text-xs w-6 h-6 flex items-center justify-center rounded hover:bg-black/10" title="Añadir Imagen"><i class="fa-regular fa-image"></i></button>
+                                <input type="file" id="file-img-${n.id}" accept="image/*" class="hidden" onchange="cargarImagenNota('${n.id}', this)">
+                            </div>
+
+                            ${n.imagen ? `<div class="mb-3 relative"><img src="${n.imagen}" class="w-full h-32 object-cover rounded-xl shadow-inner"><button onclick="eliminarImagenNota('${n.id}')" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center shadow"><i class="fa-solid fa-xmark text-[10px]"></i></button></div>` : ''}
+
+                            <textarea oninput="actualizarTextoNota('${n.id}', this.value)" placeholder="Escribe aquí tus ideas..." class="w-full bg-transparent resize-none focus:outline-none text-sm placeholder-black/35 ${isBold} ${isItalic} ${isUnderline} ${fontStyle}" style="color: ${n.colorTexto || '#1e293b'}; min-height: 120px;">${n.texto}</textarea>
+                        </div>
+
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="eliminarNota('${n.id}')" class="text-black/40 hover:text-red-600 text-xs transition">
+                                <i class="fa-solid fa-trash-can"></i> Borrar Nota
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function crearNotaNueva() {
+            db.notas.push({
+                id: 'n-' + Date.now(),
+                texto: '',
+                colorFondo: '#fef08a',
+                colorTexto: '#1e293b',
+                fuente: 'Sans',
+                bold: false,
+                italic: false,
+                underline: false,
+                imagen: null
+            });
+            saveDB();
+        }
+
+        function actualizarTextoNota(id, text) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n.texto = text;
+                localStorage.setItem(DB_KEY, JSON.stringify(db));
+            }
+        }
+
+        function cambiarColorFondoNota(id, color) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n.colorFondo = color;
+                saveDB();
+            }
+        }
+
+        function cambiarColorTextoNota(id, color) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n.colorTexto = color;
+                saveDB();
+            }
+        }
+
+        function toggleEstiloNota(id, prop) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n[prop] = !n[prop];
+                saveDB();
+            }
+        }
+
+        function cambiarFuenteNota(id, fontName) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n.fuente = fontName;
+                saveDB();
+            }
+        }
+
+        function triggerFileImageNota(id) {
+            document.getElementById(`file-img-${id}`).click();
+        }
+
+        function cargarImagenNota(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const n = db.notas.find(no => no.id === id);
+                if (n) {
+                    n.imagen = e.target.result; 
+                    saveDB();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function eliminarImagenNota(id) {
+            const n = db.notas.find(no => no.id === id);
+            if (n) {
+                n.imagen = null;
+                saveDB();
+            }
+        }
+
+        function eliminarNota(id) {
+            db.notas = db.notas.filter(n => n.id !== id);
+            saveDB();
+        }
+
+        /* --- STREAMING_CHUNK: Creando el control de ventanas modales... --- */
+        /* --- GESTIÓN DE MODALES --- */
+        function abrirModalClase(isEdit = false) {
+            document.getElementById('slot-course-name').value = '';
+            document.getElementById('slot-details').value = '';
+            document.getElementById('form-schedule-slot').removeAttribute('data-editing-id');
+            
+            const titleEl = document.querySelector('#modal-class h3');
+            if (titleEl) {
+                titleEl.innerText = isEdit ? "Editar Materia en el Horario" : "Asignar Materia al Horario";
+            }
+            
+            const modal = document.getElementById('modal-class');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function abrirModalPersonalizarHoras() {
+            renderModalHoras();
+            const modal = document.getElementById('modal-hours');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function cerrarModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+
+        /* --- NOTIFICACIONES NATIVAS DEL DISPOSITIVO --- */
+        function requestNotificationPermission() {
+            if ("Notification" in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        document.getElementById('noti-permission-banner').classList.add('hidden');
+                        showNotificationModal("Notificaciones", "¡Permiso concedido! Planix te alertará de tus actividades escolares.");
+                    }
+                });
+            }
+        }
+
+        function sendSystemNotification(title, message) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, {
+                    body: message,
+                    icon: "https://placehold.co/128x128/3b82f6/ffffff?text=PX"
+                });
+            }
+        }
+
+        /* --- STREAMING_CHUNK: Vinculando los eventos con el gestor del sistema... --- */
+        // RENDERIZADOR GENERAL DE ACTUALIZACIONES
+        function renderAll() {
+            renderDashboard();
+            renderHorario();
+            renderTareas();
+            renderAlarmas();
+            renderNotas();
+            actualizarBotonesTimer();
+            actualizarCabeceraPerfil();
+        }
+
+        window.onload = function() {
+            if (db.darkMode) {
+                els.html.classList.add('dark');
+                els.html.classList.remove('light');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-yellow-400 text-lg';
+                document.getElementById('theme-text').textContent = 'Modo Claro';
+            } else {
+                els.html.classList.remove('dark');
+                els.html.classList.add('light');
+            }
+
+            // Aplicar el fondo personalizado guardado
+            aplicarFondoApp();
+
+            const selectDay = document.getElementById('task-day');
+            selectDay.innerHTML = '';
+            for (let i = 1; i <= 31; i++) {
+                selectDay.innerHTML += `<option value="${i}">${i}</option>`;
+            }
+
+            document.getElementById('form-schedule-slot').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const nombreMateria = document.getElementById('slot-course-name').value;
+                const dia = document.getElementById('slot-day').value;
+                const hora = document.getElementById('slot-time').value;
+                const lugar = document.getElementById('slot-details').value;
+                const editingId = this.dataset.editingId;
+
+                guardarClaseHorario(nombreMateria, dia, hora, lugar, editingId);
+                cerrarModal('modal-class');
+            });
+
+            document.getElementById('form-new-hour').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const horaInput = document.getElementById('new-hour-val').value;
+                agregarHoraPersonalizada(horaInput);
+            });
+
+            document.getElementById('form-task').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const titulo = document.getElementById('task-title').value;
+                const tipo = document.getElementById('task-type').value;
+                const curso = document.getElementById('task-course').value;
+                const dia = document.getElementById('task-day').value;
+                const mes = document.getElementById('task-month').value;
+                const anio = document.getElementById('task-year').value;
+                const prioridad = document.getElementById('task-priority').value;
+                const colorAlerta = document.getElementById('task-color').value;
+                const emoji = document.getElementById('task-emoji').value.trim() || '📌';
+                const desc = document.getElementById('task-description').value;
+                const recordatorio = document.getElementById('task-alarm-toggle').checked;
+                const horaAlarma = document.getElementById('task-alarm-time').value;
+
+                db.tareas.push({
+                    id: 't-' + Date.now(),
+                    titulo: titulo,
+                    tipo: tipo,
+                    curso: curso,
+                    dia: dia,
+                    mes: mes,
+                    anio: anio,
+                    prioridad: prioridad,
+                    colorAlerta: colorAlerta,
+                    emoji: emoji,
+                    descripcion: desc,
+                    completed: false,
+                    recordatorioHora: recordatorio,
+                    horaAlarma: horaAlarma
+                });
+
+                document.getElementById('form-task').reset();
+                showNotificationModal("Tarea Guardada", `Se programó con éxito: ${titulo}`);
+                saveDB();
+            });
+
+            renderAll();
+            setTimerMode('study');
+
+            if ("Notification" in window && Notification.permission === "default") {
+                document.getElementById('noti-permission-banner').classList.remove('hidden');
+            }
+
+            alarmLoopInterval = setInterval(escanearAlarmasPlanix, 1000);
+        };
+    </script>
+</body>
+</html>
